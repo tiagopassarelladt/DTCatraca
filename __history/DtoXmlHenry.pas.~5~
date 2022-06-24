@@ -1,0 +1,368 @@
+unit DtoXmlHenry;
+
+interface
+
+uses Xml.xmldom, Xml.XMLDoc, Xml.XMLIntf;
+
+type
+
+{ Forward Decls }
+
+  IXMLDATAPACKETType = interface;
+  IXMLMETADATAType = interface;
+  IXMLFIELDSType = interface;
+  IXMLFIELDType = interface;
+  IXMLROWDATAType = interface;
+  IXMLROWType = interface;
+
+{ IXMLDATAPACKETType }
+
+  IXMLDATAPACKETType = interface(IXMLNode)
+    ['{A59C0792-87F2-4428-9415-59BB02446903}']
+    { Property Accessors }
+    function Get_Version: UnicodeString;
+    function Get_METADATA: IXMLMETADATAType;
+    function Get_ROWDATA: IXMLROWDATAType;
+    procedure Set_Version(Value: UnicodeString);
+    { Methods & Properties }
+    property Version: UnicodeString read Get_Version write Set_Version;
+    property METADATA: IXMLMETADATAType read Get_METADATA;
+    property ROWDATA: IXMLROWDATAType read Get_ROWDATA;
+  end;
+
+{ IXMLMETADATAType }
+
+  IXMLMETADATAType = interface(IXMLNode)
+    ['{AE4229C1-D791-45BB-A251-813BF85F13B9}']
+    { Property Accessors }
+    function Get_FIELDS: IXMLFIELDSType;
+    function Get_PARAMS: UnicodeString;
+    procedure Set_PARAMS(Value: UnicodeString);
+    { Methods & Properties }
+    property FIELDS: IXMLFIELDSType read Get_FIELDS;
+    property PARAMS: UnicodeString read Get_PARAMS write Set_PARAMS;
+  end;
+
+{ IXMLFIELDSType }
+
+  IXMLFIELDSType = interface(IXMLNodeCollection)
+    ['{E6F6823A-DD95-4E6A-BE02-284115305F88}']
+    { Property Accessors }
+    function Get_FIELD(Index: Integer): IXMLFIELDType;
+    { Methods & Properties }
+    function Add: IXMLFIELDType;
+    function Insert(const Index: Integer): IXMLFIELDType;
+    property FIELD[Index: Integer]: IXMLFIELDType read Get_FIELD; default;
+  end;
+
+{ IXMLFIELDType }
+
+  IXMLFIELDType = interface(IXMLNode)
+    ['{E8F06BFA-7045-4DCD-B58F-B84914EE4B30}']
+    { Property Accessors }
+    function Get_Attrname: UnicodeString;
+    function Get_Fieldtype: UnicodeString;
+    function Get_WIDTH: Integer;
+    procedure Set_Attrname(Value: UnicodeString);
+    procedure Set_Fieldtype(Value: UnicodeString);
+    procedure Set_WIDTH(Value: Integer);
+    { Methods & Properties }
+    property Attrname: UnicodeString read Get_Attrname write Set_Attrname;
+    property Fieldtype: UnicodeString read Get_Fieldtype write Set_Fieldtype;
+    property WIDTH: Integer read Get_WIDTH write Set_WIDTH;
+  end;
+
+{ IXMLROWDATAType }
+
+  IXMLROWDATAType = interface(IXMLNode)
+    ['{2FE909C3-160E-4D40-BC89-33427611235B}']
+    { Property Accessors }
+    function Get_ROW: IXMLROWType;
+    { Methods & Properties }
+    property ROW: IXMLROWType read Get_ROW;
+  end;
+
+{ IXMLROWType }
+
+  IXMLROWType = interface(IXMLNode)
+    ['{2605BD8A-999F-487A-9B62-4F87C81B8D4F}']
+    { Property Accessors }
+    function Get_RowState: Integer;
+    function Get_ID_COMANDA: string;
+    function Get_EVENTO: UnicodeString;
+    procedure Set_RowState(Value: Integer);
+    procedure Set_ID_COMANDA(Value: string);
+    procedure Set_EVENTO(Value: UnicodeString);
+    { Methods & Properties }
+    property RowState: Integer read Get_RowState write Set_RowState;
+    property ID_COMANDA: string read Get_ID_COMANDA write Set_ID_COMANDA;
+    property EVENTO: UnicodeString read Get_EVENTO write Set_EVENTO;
+  end;
+
+{ Forward Decls }
+
+  TXMLDATAPACKETType = class;
+  TXMLMETADATAType = class;
+  TXMLFIELDSType = class;
+  TXMLFIELDType = class;
+  TXMLROWDATAType = class;
+  TXMLROWType = class;
+
+{ TXMLDATAPACKETType }
+
+  TXMLDATAPACKETType = class(TXMLNode, IXMLDATAPACKETType)
+  protected
+    { IXMLDATAPACKETType }
+    function Get_Version: UnicodeString;
+    function Get_METADATA: IXMLMETADATAType;
+    function Get_ROWDATA: IXMLROWDATAType;
+    procedure Set_Version(Value: UnicodeString);
+  public
+    procedure AfterConstruction; override;
+  end;
+
+{ TXMLMETADATAType }
+
+  TXMLMETADATAType = class(TXMLNode, IXMLMETADATAType)
+  protected
+    { IXMLMETADATAType }
+    function Get_FIELDS: IXMLFIELDSType;
+    function Get_PARAMS: UnicodeString;
+    procedure Set_PARAMS(Value: UnicodeString);
+  public
+    procedure AfterConstruction; override;
+  end;
+
+{ TXMLFIELDSType }
+
+  TXMLFIELDSType = class(TXMLNodeCollection, IXMLFIELDSType)
+  protected
+    { IXMLFIELDSType }
+    function Get_FIELD(Index: Integer): IXMLFIELDType;
+    function Add: IXMLFIELDType;
+    function Insert(const Index: Integer): IXMLFIELDType;
+  public
+    procedure AfterConstruction; override;
+  end;
+
+{ TXMLFIELDType }
+
+  TXMLFIELDType = class(TXMLNode, IXMLFIELDType)
+  protected
+    { IXMLFIELDType }
+    function Get_Attrname: UnicodeString;
+    function Get_Fieldtype: UnicodeString;
+    function Get_WIDTH: Integer;
+    procedure Set_Attrname(Value: UnicodeString);
+    procedure Set_Fieldtype(Value: UnicodeString);
+    procedure Set_WIDTH(Value: Integer);
+  end;
+
+{ TXMLROWDATAType }
+
+  TXMLROWDATAType = class(TXMLNode, IXMLROWDATAType)
+  protected
+    { IXMLROWDATAType }
+    function Get_ROW: IXMLROWType;
+  public
+    procedure AfterConstruction; override;
+  end;
+
+{ TXMLROWType }
+
+  TXMLROWType = class(TXMLNode, IXMLROWType)
+  protected
+    { IXMLROWType }
+    function Get_RowState: Integer;
+    function Get_ID_COMANDA: string;
+    function Get_EVENTO: UnicodeString;
+    procedure Set_RowState(Value: Integer);
+    procedure Set_ID_COMANDA(Value: string);
+    procedure Set_EVENTO(Value: UnicodeString);
+  end;
+
+{ Global Functions }
+
+function GetDATAPACKET(Doc: IXMLDocument): IXMLDATAPACKETType;
+function LoadDATAPACKET(const FileName: string): IXMLDATAPACKETType;
+function NewDATAPACKET: IXMLDATAPACKETType;
+
+const
+  TargetNamespace = '';
+
+implementation
+
+uses Xml.xmlutil;
+
+{ Global Functions }
+
+function GetDATAPACKET(Doc: IXMLDocument): IXMLDATAPACKETType;
+begin
+  Result := Doc.GetDocBinding('DATAPACKET', TXMLDATAPACKETType, TargetNamespace) as IXMLDATAPACKETType;
+end;
+
+function LoadDATAPACKET(const FileName: string): IXMLDATAPACKETType;
+begin
+  Result := LoadXMLDocument(FileName).GetDocBinding('DATAPACKET', TXMLDATAPACKETType, TargetNamespace) as IXMLDATAPACKETType;
+end;
+
+function NewDATAPACKET: IXMLDATAPACKETType;
+begin
+  Result := NewXMLDocument.GetDocBinding('DATAPACKET', TXMLDATAPACKETType, TargetNamespace) as IXMLDATAPACKETType;
+end;
+
+{ TXMLDATAPACKETType }
+
+procedure TXMLDATAPACKETType.AfterConstruction;
+begin
+  RegisterChildNode('METADATA', TXMLMETADATAType);
+  RegisterChildNode('ROWDATA', TXMLROWDATAType);
+  inherited;
+end;
+
+function TXMLDATAPACKETType.Get_Version: UnicodeString;
+begin
+  Result := AttributeNodes['Version'].Text;
+end;
+
+procedure TXMLDATAPACKETType.Set_Version(Value: UnicodeString);
+begin
+  SetAttribute('Version', Value);
+end;
+
+function TXMLDATAPACKETType.Get_METADATA: IXMLMETADATAType;
+begin
+  Result := ChildNodes['METADATA'] as IXMLMETADATAType;
+end;
+
+function TXMLDATAPACKETType.Get_ROWDATA: IXMLROWDATAType;
+begin
+  Result := ChildNodes['ROWDATA'] as IXMLROWDATAType;
+end;
+
+{ TXMLMETADATAType }
+
+procedure TXMLMETADATAType.AfterConstruction;
+begin
+  RegisterChildNode('FIELDS', TXMLFIELDSType);
+  inherited;
+end;
+
+function TXMLMETADATAType.Get_FIELDS: IXMLFIELDSType;
+begin
+  Result := ChildNodes['FIELDS'] as IXMLFIELDSType;
+end;
+
+function TXMLMETADATAType.Get_PARAMS: UnicodeString;
+begin
+  Result := ChildNodes['PARAMS'].Text;
+end;
+
+procedure TXMLMETADATAType.Set_PARAMS(Value: UnicodeString);
+begin
+  ChildNodes['PARAMS'].NodeValue := Value;
+end;
+
+{ TXMLFIELDSType }
+
+procedure TXMLFIELDSType.AfterConstruction;
+begin
+  RegisterChildNode('FIELD', TXMLFIELDType);
+  ItemTag := 'FIELD';
+  ItemInterface := IXMLFIELDType;
+  inherited;
+end;
+
+function TXMLFIELDSType.Get_FIELD(Index: Integer): IXMLFIELDType;
+begin
+  Result := List[Index] as IXMLFIELDType;
+end;
+
+function TXMLFIELDSType.Add: IXMLFIELDType;
+begin
+  Result := AddItem(-1) as IXMLFIELDType;
+end;
+
+function TXMLFIELDSType.Insert(const Index: Integer): IXMLFIELDType;
+begin
+  Result := AddItem(Index) as IXMLFIELDType;
+end;
+
+{ TXMLFIELDType }
+
+function TXMLFIELDType.Get_Attrname: UnicodeString;
+begin
+  Result := AttributeNodes['attrname'].Text;
+end;
+
+procedure TXMLFIELDType.Set_Attrname(Value: UnicodeString);
+begin
+  SetAttribute('attrname', Value);
+end;
+
+function TXMLFIELDType.Get_Fieldtype: UnicodeString;
+begin
+  Result := AttributeNodes['fieldtype'].Text;
+end;
+
+procedure TXMLFIELDType.Set_Fieldtype(Value: UnicodeString);
+begin
+  SetAttribute('fieldtype', Value);
+end;
+
+function TXMLFIELDType.Get_WIDTH: Integer;
+begin
+  Result := AttributeNodes['WIDTH'].NodeValue;
+end;
+
+procedure TXMLFIELDType.Set_WIDTH(Value: Integer);
+begin
+  SetAttribute('WIDTH', Value);
+end;
+
+{ TXMLROWDATAType }
+
+procedure TXMLROWDATAType.AfterConstruction;
+begin
+  RegisterChildNode('ROW', TXMLROWType);
+  inherited;
+end;
+
+function TXMLROWDATAType.Get_ROW: IXMLROWType;
+begin
+  Result := ChildNodes['ROW'] as IXMLROWType;
+end;
+
+{ TXMLROWType }
+
+function TXMLROWType.Get_RowState: Integer;
+begin
+  Result := AttributeNodes['RowState'].NodeValue;
+end;
+
+procedure TXMLROWType.Set_RowState(Value: Integer);
+begin
+  SetAttribute('RowState', Value);
+end;
+
+function TXMLROWType.Get_ID_COMANDA: string;
+begin
+  Result := AttributeNodes['ID_COMANDA'].NodeValue;
+end;
+
+procedure TXMLROWType.Set_ID_COMANDA(Value: string);
+begin
+  SetAttribute('ID_COMANDA', Value);
+end;
+
+function TXMLROWType.Get_EVENTO: UnicodeString;
+begin
+  Result := AttributeNodes['EVENTO'].Text;
+end;
+
+procedure TXMLROWType.Set_EVENTO(Value: UnicodeString);
+begin
+  SetAttribute('EVENTO', Value);
+end;
+
+end.

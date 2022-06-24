@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2022/06/23 09:00:44.000.683,=rtl.dcp</Transaction>
+    <Transaction>2022/06/23 09:00:53.000.059,C:\Users\Tiago Passarella\Documents\Embarcadero\Studio\Projects\Package1.dproj=C:\Users\Tiago Passarella\Documents\Embarcadero\Studio\Projects\Catraca.dproj</Transaction>
+    <Transaction>2022/06/23 09:01:58.000.350,=D:\Dropbox\Componentes\DTCatraca\DTCatraca.pas</Transaction>
+    <Transaction>2022/06/23 09:02:03.000.658,C:\Users\Tiago Passarella\Documents\Embarcadero\Studio\Projects\Catraca.dproj=D:\Dropbox\Componentes\DTCatraca\Catraca.dproj</Transaction>
+    <Transaction>2022/06/23 11:42:59.000.069,=vcl.dcp</Transaction>
+    <Transaction>2022/06/23 12:00:55.000.692,=xmlrtl.dcp</Transaction>
+    <Transaction>2022/06/23 18:48:17.000.880,=D:\Dropbox\Componentes\DTCatraca\_000000003.pas</Transaction>
+    <Transaction>2022/06/23 18:49:04.000.165,D:\Dropbox\Componentes\DTCatraca\DtoXmlHenry.pas=D:\Dropbox\Componentes\DTCatraca\_000000003.pas</Transaction>
+    <Transaction>2022/06/23 22:14:26.000.586,D:\Dropbox\Componentes\DTCatraca\DtoXmlHenry.pas=</Transaction>
+  </Transactions>
+</BorlandProject>
