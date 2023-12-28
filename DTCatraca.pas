@@ -3,26 +3,61 @@ unit DTCatraca;
 interface
 
 uses
-  System.SysUtils, System.Classes, ComObj, XMLIntf, XMLDoc;
+  System.SysUtils, System.Classes, ComObj, XMLIntf, XMLDoc,FireDAC.Stan.Intf,
+FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Phys.Intf,
+FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async, FireDAC.Phys,
+FireDAC.Phys.FB, FireDAC.Phys.FBDef, FireDAC.VCLUI.Wait, FireDAC.Phys.IBBase,
+FireDAC.Comp.Client, Vcl.Grids, Vcl.DBGrids, FireDAC.Stan.Param,
+FireDAC.DatS, FireDAC.DApt.Intf, FireDAC.DApt, FireDAC.Comp.DataSet,FireDAC.Comp.Script,FireDAC.Phys.MySQL;
 
-type TModeloCatraca = (ctHenry , ctNenhum );
+type TModeloCatraca = (ctHenry ,ctBlantech, ctOtton, ctNenhum );
 type TStatusCatraca = (stcLivre , stcBloqueada );
+
+TYPE TConfiguracoesDB = class(TPersistent)
+   private
+      FCon            : TFDConnection;
+      FPassWord       : string;
+      FUserName       : String;
+      FServer         : string;
+      FVendorLib      : String;
+      FPorta          : string;
+      FDataBase       : string;
+   public
+      procedure Assign(Source: TPersistent); override;
+   published
+      property UserName         : String       read FUserName         write FUserName;
+      property PassWord         : string       read FPassWord         write FPassWord;
+      property Server           : string       read FServer           write FServer;
+      property VendorLib        : String       read FVendorLib        write FVendorLib;
+      property Porta            : string       read FPorta            write FPorta;
+      property DataBase         : string       read FDataBase         write FDataBase;
+
+end;
 
 type
   TDTCatraca = class(TComponent)
   private
     FPathXML: string;
     FModelo: TModeloCatraca;
+    FConfiguracoes: TConfiguracoesDB;
     procedure setPathXML(const Value: string);
     procedure setModelo(const Value: TModeloCatraca);
+    procedure SetConfiguracoes(const Value: TConfiguracoesDB);
 
   protected
 
   public
       function GerarXML(Comanda: string; StatusCatraca: TStatusCatraca): string;
+      function GerarXMLComandasLivres(ComandasLivres: TStringList): string;
+      function LiberaComanda(Comanda:string) : Boolean;
+      function BloqueiaComanda(Comanda:string) : Boolean;
+
+      constructor Create(AOwner: TComponent); override;
+      destructor Destroy; override;
   published
-      property PathDoXml:string               read FPathXML     write setPathXML;
-      property ModeloCatraca:TModeloCatraca   read FModelo      write setModelo;
+      property PathDoXml     : string                 read FPathXML       write setPathXML;
+      property ModeloCatraca : TModeloCatraca         read FModelo        write setModelo;
+      property Configuracoes : TConfiguracoesDB       read FConfiguracoes write SetConfiguracoes;
   end;
 
   const
@@ -54,6 +89,89 @@ end;
 
 { TDTCatraca }
 
+function TDTCatraca.BloqueiaComanda(Comanda: string): Boolean;
+var
+Qryx                   : TFDQuery;
+FDPhysMySQLDriverLink1 : TFDPhysMySQLDriverLink;
+begin
+  TRY
+     TRY
+        FConfiguracoes.FCon                            := TFDConnection.Create(nil);
+        FDPhysMySQLDriverLink1                         := TFDPhysMySQLDriverLink.Create(nil);
+        FDPhysMySQLDriverLink1.VendorLib               := FConfiguracoes.FVendorLib;
+        FConfiguracoes.FCon.Connected                  := False;
+        FConfiguracoes.FCon.Params.Clear;
+        FConfiguracoes.FCon.DriverName                 := 'MySQL';
+        FConfiguracoes.FCon.Params.DriverID            := 'MySQL';
+        FConfiguracoes.FCon.Params.Values['DriverID']  := 'MySQL';
+        FConfiguracoes.FCon.Params.Values['Server']    := FConfiguracoes.FServer;
+        FConfiguracoes.FCon.Params.Values['Port']      := FConfiguracoes.FPorta;
+        FConfiguracoes.FCon.Params.Values['User_Name'] := FConfiguracoes.FUsername;
+        FConfiguracoes.FCon.Params.Values['Password']  := FConfiguracoes.FPassWord;
+        FConfiguracoes.FCon.Params.Values['Database']  := FConfiguracoes.FDataBase;
+
+        if not FConfiguracoes.Fcon.Connected then
+         FConfiguracoes.Fcon.Connected := True;
+
+        Qryx            := TFDQuery.Create(nil);
+        Qryx.Connection := FConfiguracoes.Fcon;
+
+        Qryx.SQL.Text := 'select count(*) as total from cad_comanda WHERE num_comanda=:p1';
+        Qryx.ParamByName('p1').AsInteger := StrToInt( Comanda );
+        Qryx.Open;
+
+        if Qryx.FieldByName('total').AsInteger <=0 then
+        begin
+             Qryx.Close;
+             Qryx.SQL.Clear;
+             Qryx.SQL.Text := 'INSERT INTO cad_comanda (num_comanda,fl_comanda) values (:p1,0)';
+             Qryx.ParamByName('p1').AsInteger := StrToInt( Comanda );
+             Qryx.ExecSQL;
+        end;
+        Qryx.Close;
+        Qryx.SQL.Clear;
+
+        Qryx.SQL.Text := 'UPDATE cad_comanda SET fl_comanda=0 WHERE num_comanda=:p1';
+        Qryx.ParamByName('p1').AsInteger := StrToInt( Comanda );
+        Qryx.ExecSQL;
+
+        Qryx.Free;
+
+        Result := True;
+     except ON E:Exception do
+     begin
+          raise Exception.Create(E.Message);
+          Result := False;
+     end;
+
+     END;
+  FINALLY
+     FConfiguracoes.FCon.Connected := False;
+     FConfiguracoes.FCon.Free;
+     FDPhysMySQLDriverLink1.Free;
+  END;
+
+end;
+
+constructor TDTCatraca.Create(AOwner: TComponent);
+begin
+     inherited Create(AOwner);
+
+     FConfiguracoes                 := TConfiguracoesDB.Create;
+     FConfiguracoes.FPassWord       := 'cat01';
+     FConfiguracoes.FUserName       := 'catraca';
+     FConfiguracoes.FServer         := 'localhost';
+     FConfiguracoes.FVendorLib      := '';
+     FConfiguracoes.FPorta          := '3307';
+     FConfiguracoes.DataBase        := 'catraca';
+end;
+
+destructor TDTCatraca.Destroy;
+begin
+  FConfiguracoes.Free;
+  inherited Destroy;
+end;
+
 function TDTCatraca.GerarXML(Comanda: string; StatusCatraca: TStatusCatraca):string;
 VAR
 Stat:string;
@@ -66,6 +184,74 @@ begin
       Stat := 'C';
    end;
 
+   if FModelo = ctOtton then
+   begin
+      try
+          try
+             if StatusCatraca = stcLivre then
+                LiberaComanda(Comanda);
+             if StatusCatraca = stcBloqueada then
+                BloqueiaComanda(Comanda);
+          except on e:Exception do
+               begin
+                    raise Exception.Create( e.Message );
+               end;
+          end;
+      finally
+
+      end;
+   end else begin
+       try
+           try
+               vXML := TXMLDocument.Create(nil);
+
+               if not DirectoryExists( FPathXML ) then
+                 ForceDirectories( FPathXML );
+
+               if FileExists( FPathXML + '\' + Comanda.PadLeft(10 , '0' ) + '.xml' ) then
+                  DeleteFile( FPathXML + '\' + Comanda.PadLeft(10 , '0' ) + '.xml' );
+
+               if ModeloCatraca = ctHenry then
+               begin
+                    vXML.Active     := True;
+                    vXML.Version    := '1.0';
+                    vXML.StandAlone := 'yes';
+
+                    vXML.XML.Add(' <DATAPACKET Version="2.0"> ');
+                    vXML.XML.Add(' <METADATA> ');
+                    vXML.XML.Add(' <FIELDS> ');
+                    vXML.XML.Add(' <FIELD attrname="ID_COMANDA" fieldtype="string" WIDTH="20" /> ');
+                    vXML.XML.Add(' <FIELD attrname="EVENTO" fieldtype="string" WIDTH="1" /> ');
+                    vXML.XML.Add(' </FIELDS> ');
+                    vXML.XML.Add(' <PARAMS /> ');
+                    vXML.XML.Add(' </METADATA> ' );
+                    vXML.XML.Add(' <ROWDATA> ');
+                    vXML.XML.Add(' <ROW RowState="4" ID_COMANDA="'+  Comanda.PadLeft(10,'0')  +'" EVENTO="'+ Stat +'" /> ');
+                    vXML.XML.Add(' </ROWDATA> ');
+                    vXML.XML.Add(' </DATAPACKET> ');
+                    vXML.Active := True;
+                    vXML.SaveToFile( FPathXML + '\' + Comanda.PadLeft(10 , '0' ) + '.xml' );
+               end;
+           except on e:Exception do
+               begin
+                    raise Exception.Create( e.Message );
+               end;
+           end;
+       finally
+           Result := vXML.XML.Text;
+           FreeAndNil( vXML );
+       end;
+   end;
+end;
+
+function TDTCatraca.GerarXMLComandasLivres(ComandasLivres: TStringList): string;
+VAR
+vXML                  : TXMLDocument;
+RootNode, ComandaNode : IXMLNode;
+i                     : integer;
+XmlString             : TStringList;
+vXXML                 : String;
+begin
    try
        try
            vXML := TXMLDocument.Create(nil);
@@ -73,29 +259,31 @@ begin
            if not DirectoryExists( FPathXML ) then
              ForceDirectories( FPathXML );
 
-           if FileExists( FPathXML + '\' + Comanda.PadLeft(10 , '0' ) + '.xml' ) then
-              DeleteFile( FPathXML + '\' + Comanda.PadLeft(10 , '0' ) + '.xml' );
+           if FileExists( FPathXML + '\Comandas.xml' ) then
+              DeleteFile( FPathXML + '\Comandas.xml' );
 
-           if ModeloCatraca = ctHenry then
+           if ModeloCatraca = ctBlantech then
            begin
                 vXML.Active     := True;
                 vXML.Version    := '1.0';
-                vXML.StandAlone := 'yes';
+                vXML.Encoding   := 'utf-8';
+                vXML.Options    := [doNodeAutoIndent];
 
-                vXML.XML.Add(' <DATAPACKET Version="2.0"> ');
-                vXML.XML.Add(' <METADATA> ');
-                vXML.XML.Add(' <FIELDS> ');
-                vXML.XML.Add(' <FIELD attrname="ID_COMANDA" fieldtype="string" WIDTH="20" /> ');
-                vXML.XML.Add(' <FIELD attrname="EVENTO" fieldtype="string" WIDTH="1" /> ');
-                vXML.XML.Add(' </FIELDS> ');
-                vXML.XML.Add(' <PARAMS /> ');
-                vXML.XML.Add(' </METADATA> ' );
-                vXML.XML.Add(' <ROWDATA> ');
-                vXML.XML.Add(' <ROW RowState="4" ID_COMANDA="'+  Comanda.PadLeft(10,'0')  +'" EVENTO="'+ Stat +'" /> ');
-                vXML.XML.Add(' </ROWDATA> ');
-                vXML.XML.Add(' </DATAPACKET> ');
-                vXML.Active     := True;
-                vXML.SaveToFile( FPathXML + '\' + Comanda.PadLeft(10 , '0' ) + '.xml' );
+                RootNode := vXML.AddChild('Comandas');
+
+               for i := 0 to ComandasLivres.Count - 1 do
+               begin
+                 ComandaNode      := RootNode.AddChild('Comanda');
+                 ComandaNode.Text := ComandasLivres[i];
+               end;
+
+               vXML.SaveToXML(vXXML);
+               vXXML := vXXML.Replace('<?xml version="1.0"?>','');
+               vXXML := Format('<?xml version="1.0" encoding="%s"?>%s', [vXML.Encoding, vXXML]);
+
+               XmlString      := TStringList.Create;
+               XmlString.Text := vXXML;
+               XMLString.SaveToFile( FPathXML + '\Comandas.xml',TEncoding.Utf8 );
            end;
 
        except on e:Exception do
@@ -104,9 +292,78 @@ begin
            end;
        end;
    finally
-       Result := vXML.XML.Text;
-       FreeAndNil( vXML );
+       Result := XmlString.Text;
+       FreeAndNil(XmlString);
    end;
+end;
+
+function TDTCatraca.LiberaComanda(Comanda: string): Boolean;
+var
+Qryx                   : TFDQuery;
+FDPhysMySQLDriverLink1 : TFDPhysMySQLDriverLink;
+begin
+  TRY
+     TRY
+        FConfiguracoes.FCon                            := TFDConnection.Create(nil);
+        FDPhysMySQLDriverLink1                         := TFDPhysMySQLDriverLink.Create(nil);
+        FDPhysMySQLDriverLink1.VendorLib               := FConfiguracoes.FVendorLib;
+        FConfiguracoes.FCon.Connected                  := False;
+        FConfiguracoes.FCon.Params.Clear;
+        FConfiguracoes.FCon.DriverName                 := 'MySQL';
+        FConfiguracoes.FCon.Params.DriverID            := 'MySQL';
+        FConfiguracoes.FCon.Params.Values['DriverID']  := 'MySQL';
+        FConfiguracoes.FCon.Params.Values['Server']    := FConfiguracoes.FServer;
+        FConfiguracoes.FCon.Params.Values['Port']      := FConfiguracoes.FPorta;
+        FConfiguracoes.FCon.Params.Values['User_Name'] := FConfiguracoes.FUsername;
+        FConfiguracoes.FCon.Params.Values['Password']  := FConfiguracoes.FPassWord;
+        FConfiguracoes.FCon.Params.Values['Database']  := FConfiguracoes.FDataBase;
+
+        if not FConfiguracoes.Fcon.Connected then
+         FConfiguracoes.Fcon.Connected := True;
+
+        Qryx            := TFDQuery.Create(nil);
+        Qryx.Connection := FConfiguracoes.Fcon;
+
+        Qryx.SQL.Text := 'select count(*) as total from cad_comanda WHERE num_comanda=:p1';
+        Qryx.ParamByName('p1').AsInteger := StrToInt( Comanda );
+        Qryx.Open;
+
+        if Qryx.FieldByName('total').AsInteger <=0 then
+        begin
+             Qryx.Close;
+             Qryx.SQL.Clear;
+             Qryx.SQL.Text := 'INSERT INTO cad_comanda (num_comanda,fl_comanda) values (:p1,1)';
+             Qryx.ParamByName('p1').AsInteger := StrToInt( Comanda );
+             Qryx.ExecSQL;
+        end;
+        Qryx.Close;
+        Qryx.SQL.Clear;
+
+        Qryx.SQL.Text := 'UPDATE cad_comanda SET fl_comanda=1 WHERE num_comanda=:p1';
+        Qryx.ParamByName('p1').AsInteger := StrToInt( Comanda );
+        Qryx.ExecSQL;
+
+        Qryx.Free;
+
+        Result := True;
+     except ON E:Exception do
+     begin
+          raise Exception.Create(E.Message);
+          Result := False;
+     end;
+
+     END;
+  FINALLY
+     FConfiguracoes.FCon.Connected := False;
+     FConfiguracoes.FCon.Free;
+     FDPhysMySQLDriverLink1.Free;
+  END;
+
+end;
+
+procedure TDTCatraca.SetConfiguracoes(const Value: TConfiguracoesDB);
+begin
+  FConfiguracoes := Value;
 end;
 
 procedure TDTCatraca.setModelo(const Value: TModeloCatraca);
@@ -117,6 +374,14 @@ end;
 procedure TDTCatraca.setPathXML(const Value: string);
 begin
   FPathXML := Value;
+end;
+
+{ TConfiguracoesDB }
+
+procedure TConfiguracoesDB.Assign(Source: TPersistent);
+begin
+  inherited;
+
 end;
 
 end.

@@ -1,7 +1,7 @@
 package Catraca;
 
 {$R *.res}
-{$R TDTCatraca.dcr}
+{$R 'TDTCatraca.dcr'}
 {$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
 {$ALIGN 8}
 {$ASSERTIONS ON}
@@ -31,7 +31,15 @@ package Catraca;
 requires
   rtl,
   vcl,
-  xmlrtl;
+  xmlrtl,
+  dbrtl,
+  vcldb,
+  vclFireDAC,
+  FireDAC,
+  FireDACCommonDriver,
+  FireDACCommon,
+  FireDACIBDriver,
+  FireDACMySQLDriver;
 
 contains
   DTCatraca in 'DTCatraca.pas';

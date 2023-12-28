@@ -4,8 +4,8 @@ object Form5: TForm5
   BorderIcons = [biSystemMenu]
   BorderStyle = bsSingle
   Caption = 'Demo - DTCatraca'
-  ClientHeight = 188
-  ClientWidth = 506
+  ClientHeight = 372
+  ClientWidth = 676
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -13,6 +13,7 @@ object Form5: TForm5
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
+  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object Label1: TLabel
@@ -23,11 +24,18 @@ object Form5: TForm5
     Caption = 'Caminho'
   end
   object Label2: TLabel
-    Left = 8
-    Top = 54
+    Left = 135
+    Top = 8
     Width = 59
     Height = 13
     Caption = 'n'#186' Comanda'
+  end
+  object Label3: TLabel
+    Left = 453
+    Top = 8
+    Width = 73
+    Height = 13
+    Caption = 'Modelo catraca'
   end
   object edtCaminho: TEdit
     Left = 8
@@ -38,9 +46,9 @@ object Form5: TForm5
     Text = 'C:\TEMP'
   end
   object Button1: TButton
-    Left = 8
-    Top = 152
-    Width = 121
+    Left = 583
+    Top = 22
+    Width = 76
     Height = 25
     Cursor = crHandPoint
     Caption = 'Gerar XML'
@@ -48,12 +56,13 @@ object Form5: TForm5
     OnClick = Button1Click
   end
   object RadioGroup1: TRadioGroup
-    Left = 8
-    Top = 97
-    Width = 121
-    Height = 49
+    Left = 262
+    Top = 8
+    Width = 185
+    Height = 37
     Cursor = crHandPoint
     Caption = 'Status'
+    Columns = 2
     ItemIndex = 0
     Items.Strings = (
       '1 - Bloqueado'
@@ -61,25 +70,44 @@ object Form5: TForm5
     TabOrder = 2
   end
   object edtComanda: TEdit
-    Left = 8
-    Top = 70
+    Left = 135
+    Top = 24
     Width = 121
     Height = 21
     TabOrder = 3
     Text = '123'
   end
   object Memo1: TMemo
-    Left = 135
-    Top = 24
-    Width = 363
-    Height = 156
+    Left = 8
+    Top = 51
+    Width = 651
+    Height = 313
     Lines.Strings = (
       'Memo1')
     TabOrder = 4
   end
+  object cboTipo: TComboBox
+    Left = 453
+    Top = 24
+    Width = 124
+    Height = 21
+    Cursor = crHandPoint
+    Style = csDropDownList
+    Color = clInfoBk
+    TabOrder = 5
+    StyleElements = [seFont, seBorder]
+  end
   object DTCatraca1: TDTCatraca
     ModeloCatraca = ctHenry
-    Left = 208
-    Top = 48
+    Configuracoes.UserName = 'catraca'
+    Configuracoes.PassWord = 'cat01'
+    Configuracoes.Server = 'localhost'
+    Configuracoes.VendorLib = 
+      'D:\Dropbox\FONTES VCL\APis\API Principal Console\Win32\Debug\lib' +
+      'mySQL.dll'
+    Configuracoes.Porta = '3307'
+    Configuracoes.DataBase = 'catraca'
+    Left = 248
+    Top = 128
   end
 end
